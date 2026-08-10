@@ -612,6 +612,41 @@ function script.windowSettings()
     end
 end
 
+local charges = {
+    {"Speeding", 150, 800},
+    {"Reckless Driving", 500, 2500},
+    {"Street Racing", 1000, 5000},
+    {"Evading Police", 2500, 10000},
+    {"Failure to Yield", 200, 600},
+    {"Running Red Light", 250, 750},
+    {"Illegal Lane Change", 150, 400},
+    {"Exhibition of Speed", 500, 2000},
+    {"Hit and Run", 2000, 8000},
+    {"No Valid License", 500, 1500},
+}
+
+function script.ticketWindow()
+    ui.text("Ticket Panel")
+    ui.separator()
+    if teamChoice ~= 0 then ui.text("Switch to Cop to use"); return end
+    local hasLocked = false
+    local targetName = ""
+    for _, t in pairs(activeNotifications) do
+        hasLocked = true; targetName = t.name or t.driver or "Player"; break
+    end
+    if not hasLocked then ui.textColored("No target locked", rgbm(0.4, 0.4, 0.4, 1)); return end
+    ui.text(string.format("Target: %s", targetName))
+    ui.separator()
+    for _, c in ipairs(charges) do
+        local fine = math.random(c[2], c[3])
+        local code = string.format("%02d-%03d", math.random(10, 99), math.random(100, 999))
+        local ticket = string.format("[TICKET] %s -- %s | $%d | Code: %s", targetName, c[1], fine, code)
+        if ui.button(string.format("%s  - $%d", c[1], fine), 220, 18) then
+            ac.setClipboardText(ticket)
+        end
+    end
+end
+
 function script.update(dt)
     if not active then return end
 
