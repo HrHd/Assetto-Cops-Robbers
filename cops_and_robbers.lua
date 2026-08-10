@@ -626,6 +626,8 @@ local charges = {
 }
 
 local ticketCopied = ""
+local cachedCharges = {}
+local cachedTarget = ""
 
 ffi.cdef[[
     int OpenClipboard(void*);
@@ -666,15 +668,21 @@ function script.ticketWindow()
     for _, t in pairs(activeNotifications) do
         hasLocked = true; targetName = t.driver or t.name or "Player"; break
     end
-    if not hasLocked then ui.textColored("No target locked", rgbm(0.4, 0.4, 0.4, 1)); return end
+    if not hasLocked then cachedTarget = ""; ui.textColored("No target locked", rgbm(0.4, 0.4, 0.4, 1)); return end
+    if targetName ~= cachedTarget then
+        cachedTarget = targetName; cachedCharges = {}
+        for _, c in ipairs(charges) do
+            local fine = math.random(c[2], c[3])
+            local code = string.format("%02d-%03d", math.random(10, 99), math.random(100, 999))
+            local ticket = string.format("[TICKET] %s -- %s | $%d | Code: %s", targetName, c[1], fine, code)
+            table.insert(cachedCharges, {label = string.format("%s  - $%d", c[1], fine), ticket = ticket})
+        end
+    end
     ui.text(string.format("Target: %s", targetName))
     ui.separator()
-    for _, c in ipairs(charges) do
-        local fine = math.random(c[2], c[3])
-        local code = string.format("%02d-%03d", math.random(10, 99), math.random(100, 999))
-        local ticket = string.format("[TICKET] %s -- %s | $%d | Code: %s", targetName, c[1], fine, code)
-        if ui.button(string.format("%s  - $%d", c[1], fine), 220, 18) then
-            ticketCopied = ticket
+    for _, ch in ipairs(cachedCharges) do
+        if ui.button(ch.label, 220, 18) then
+            ticketCopied = ch.ticket
         end
     end
     if ticketCopied ~= "" then
