@@ -309,7 +309,7 @@ local function updateRadar(dt)
     copPrevSpd = curCopSpd
 
     if nearestCopDist < radarBeepRange() and cfg.radarAudio then
-        if not kaVoicePlayed and beepPath then
+        if not kaVoicePlayed and beepPath and player.speedKmh >= 15 then
             local voice = ac.AudioEvent.fromFile({filename = beepPath})
             if voice then voice.volume = cfg.beepVolume; voice:setPosition(ppos, plook); voice:start() end
             kaVoicePlayed = true; voiceSuppressTimer = 1.5
