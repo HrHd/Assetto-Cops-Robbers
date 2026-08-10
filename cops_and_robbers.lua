@@ -296,6 +296,7 @@ local function updateRadar(dt)
         if chaseAwayTimer > 60 then chaseSearchPhase = false; chaseAwayTimer = 0; copProximityTimer = 0 end
     end
 
+    escapedTextTimer = math.max(0, escapedTextTimer - dt)
     robberPrevSpeed = player.speedKmh
     copPrevSpd = curCopSpd
 
@@ -422,6 +423,7 @@ local function updateSpeedRadar(dt)
     end
     if copSearchTimer > 0 then
         copSearchTimer = copSearchTimer - dt
+        copEscapedTimer = math.max(0, copEscapedTimer - dt)
         if copSearchTimer <= 0 then copSearchTimer = 0 end
     end
     wasTracking = hasTargets
@@ -496,7 +498,6 @@ function script.windowMain(dt)
                 ui.textColored(string.format("CHASE %02d:%02d  Esc: %.0fs", mins, secs, 60 - chaseAwayTimer), rgbm(1, 0.4, 0.1, 1))
             end
         elseif chaseSearchPhase then
-            escapedTextTimer = math.max(0, escapedTextTimer - dt)
             if escapedTextTimer > 0 then
                 ui.textColored("ESCAPED!", rgbm(0, 1, 0, 1))
             else
@@ -559,7 +560,6 @@ function script.windowMain(dt)
             ui.textColored("Hold key to lock", rgbm(0.35, 0.35, 0.35, 1))
         else
             if copSearchTimer > 0 then
-                copEscapedTimer = math.max(0, copEscapedTimer - dt)
                 if copEscapedTimer > 0 then
                     ui.textColored("ESCAPED!", rgbm(0, 1, 0, 1))
                 else
@@ -799,7 +799,6 @@ function script.radarMini()
             if locked > 0 then ui.textColored(string.format("%d locked %d tracking", locked, scanning), rgbm(1, 0.2, 0, 1)) end
         else
             if copSearchTimer > 0 then
-                copEscapedTimer = math.max(0, copEscapedTimer - dt)
                 if copEscapedTimer > 0 then
                     ui.textColored("ESCAPED!", rgbm(0, 1, 0, 1))
                 else
