@@ -1,5 +1,11 @@
 local active = true
-local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 60 }
+local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 60, radarPreset = 3 }
+
+local function radarRange()     return ({750, 1000, 1500})[cfg.radarPreset] end
+local function radarBehind()     return ({35, 50, 68})[cfg.radarPreset] end
+local function radarBehindDot()  return ({-0.7, -0.82, -0.95})[cfg.radarPreset] end
+local function radarBeepRange()  return ({750, 1000, 1500})[cfg.radarPreset] end
+local function radarTargeted()   return ({15, 22, 30})[cfg.radarPreset] end
 local teamChoice = 0
 local cooldown = 0
 local cooldownDuration = 8
@@ -228,8 +234,8 @@ local function updateRadar(dt)
                     local dist = toCar:length()
                     local dir = toCar:normalize()
                     local dot = plook:dot(dir)
-                    if dist < nearestCopDist and dist < 450 then nearestCopDist = dist; nearestCopDirection = math.deg(math.atan2(plook.x * dir.z - plook.z * dir.x, dot)) end
-                    if dist < 68 and dot < -0.95 and dist < copBehindDist then copBehindDist = dist end
+                    if dist < nearestCopDist and dist < radarRange() then nearestCopDist = dist; nearestCopDirection = math.deg(math.atan2(plook.x * dir.z - plook.z * dir.x, dot)) end
+                    if dist < radarBehind() and dot < radarBehindDot() and dist < copBehindDist then copBehindDist = dist end
                 end
             end
         end
@@ -248,7 +254,7 @@ local function updateRadar(dt)
         end
     end
 
-    if copBehindDist < 68 then
+    if copBehindDist < radarBehind() then
         if player.speedKmh >= cfg.speedLimit then copProximityTimer = copProximityTimer + dt
         else copProximityTimer = math.max(0, copProximityTimer - dt * 2) end
     else copProximityTimer = math.max(0, copProximityTimer - dt * 2) end
@@ -267,12 +273,13 @@ local function updateRadar(dt)
     robberPrevSpeed = player.speedKmh
     copPrevSpd = curCopSpd
 
-    if nearestCopDist < 450 and beepPath and cfg.radarAudio then
+    if nearestCopDist < radarBeepRange() and beepPath and cfg.radarAudio then
         local interval, pitch
-        if nearestCopDist < 15 then interval = 0.16; pitch = 1.5
-        elseif nearestCopDist < 68 then interval = 0.36; pitch = 1.3
-        elseif nearestCopDist < 180 then interval = 0.70; pitch = 1.1
-        elseif nearestCopDist < 315 then interval = 1.20; pitch = 0.9
+        local br = radarBeepRange()
+        if nearestCopDist < br * 0.02 then interval = 0.16; pitch = 1.5
+        elseif nearestCopDist < br * 0.15 then interval = 0.36; pitch = 1.3
+        elseif nearestCopDist < br * 0.40 then interval = 0.70; pitch = 1.1
+        elseif nearestCopDist < br * 0.70 then interval = 1.20; pitch = 0.9
         else interval = 3.00; pitch = 0.7 end
         interval = interval * cfg.chirpSpeed
         pitch = pitch * cfg.chirpTone
@@ -425,10 +432,11 @@ function script.windowMain(dt)
             chaseActive = false; chaseSearchPhase = false; copProximityTimer = 0; chaseAwayTimer = 0
         end
         if nearestCopDist < math.huge then
-            local dc = nearestCopDist < 27 and rgbm(1, 0, 0, 1) or (nearestCopDist < 90 and rgbm(1, 0.5, 0, 1) or rgbm(0, 1, 0, 1))
-            local strength = math.floor(math.max(0, math.min(9, (450 - nearestCopDist) / 450 * 9 + 1)))
+            local r = radarRange()
+            local dc = nearestCopDist < radarTargeted() and rgbm(1, 0, 0, 1) or (nearestCopDist < r * 0.2 and rgbm(1, 0.5, 0, 1) or rgbm(0, 1, 0, 1))
+            local strength = math.floor(math.max(0, math.min(9, (r - nearestCopDist) / r * 9 + 1)))
             local bars = string.rep("|", strength) .. string.rep(".", 9 - strength)
-            local arrow = nearestCopDirection < -20 and "L" or (nearestCopDirection > 20 and "R" or (nearestCopDist < 45 and "!" or "A"))
+            local arrow = nearestCopDirection < -20 and "L" or (nearestCopDirection > 20 and "R" or (nearestCopDist < radarBehind() and "!" or "A"))
             ui.textColored(string.format("Ka %.4f  S%d  %s  %.0fm", 24.125 + nearestCopDist * 0.002, strength, arrow, nearestCopDist), dc)
             ui.textColored(string.format("  [%s]", bars), dc)
         else
@@ -446,7 +454,7 @@ function script.windowMain(dt)
             local secs = math.floor(elapsed % 60)
             if chaseFlashTimer > 0 and math.sin(os.preciseClock() * 8) > 0 then
                 ui.textColored("** CHASE **", rgbm(1, 0.5, 0, 1))
-            elseif copBehindDist < 68 then
+            elseif copBehindDist < radarBehind() then
                 ui.textColored(string.format("CHASE %02d:%02d  %.0fm", mins, secs, copBehindDist), rgbm(1, 0.2, 0, 1))
             else
                 ui.textColored(string.format("CHASE %02d:%02d  Esc: %.0fs", mins, secs, 60 - chaseAwayTimer), rgbm(1, 0.4, 0.1, 1))
@@ -459,7 +467,7 @@ function script.windowMain(dt)
             ui.textColored(string.format("Signal: %.0fm", copBehindDist), rgbm(1, 0.8, 0.1, 1))
         end
 
-        if copBehindDist < 27 and ac.getCar(playerIndex) and ac.getCar(playerIndex).speedKmh >= cfg.speedLimit then
+        if copBehindDist < radarTargeted() and ac.getCar(playerIndex) and ac.getCar(playerIndex).speedKmh >= cfg.speedLimit then
             ui.textColored("** TARGETED **", rgbm(1, 0, 0, 1))
             lastTargetedAlert = os.preciseClock()
         end
@@ -578,6 +586,9 @@ function script.windowSettings()
     if ui.button("-##chase", 18, 20) then cfg.chaseStartSecs = math.max(10, cfg.chaseStartSecs - 10) end
     ui.sameLine()
     if ui.button("+##chase", 18, 20) then cfg.chaseStartSecs = math.min(120, cfg.chaseStartSecs + 10) end
+    ui.text("Radar detector:")
+    local presetLabel = ({ "Poor (750m)", "Decent (1000m)", "Good (1500m)" })[cfg.radarPreset]
+    if ui.button(presetLabel, 140, 20) then cfg.radarPreset = cfg.radarPreset % 3 + 1 end
     ui.text("Mute keybind:")
     robberMuteButton:control()
     ui.separator()
