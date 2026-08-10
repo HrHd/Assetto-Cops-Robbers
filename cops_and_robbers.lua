@@ -629,10 +629,7 @@ function script.windowSettings()
     if ui.button(presetLabel, 140, 20) then cfg.radarPreset = cfg.radarPreset % 3 + 1 end
     ui.text("Mute keybind:")
     robberMuteButton:control()
-    ui.text("Penalty: " .. tostring(cfg.penaltySecs) .. "s")
-    if ui.button("-##pen", 18, 20) then cfg.penaltySecs = math.max(30, cfg.penaltySecs - 10) end
-    ui.sameLine()
-    if ui.button("+##pen", 18, 20) then cfg.penaltySecs = math.min(300, cfg.penaltySecs + 10) end
+    ui.text("Penalty: use Penalty Panel")
     ui.separator()
     ui.text("Cop Radar:")
     ui.text("Speed limit: " .. tostring(cfg.speedLimit) .. " km/h")
