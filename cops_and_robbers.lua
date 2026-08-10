@@ -31,6 +31,7 @@ local copPrevSpd = 0
 local penaltyActive = false
 local penaltyTimer = 0
 local penaltyViolations = 0
+local penaltyDuration = 0
 local radarBeep = nil
 local radarLastBeep = 0
 local radarReady = false
@@ -234,15 +235,15 @@ local function updateRadar(dt)
             if penaltyViolations >= 3 then
                 ac.overrideCarState('brake', nil)
                 teleportPlayer()
-                penaltyActive = false; penaltyTimer = 0; penaltyViolations = 0
+                penaltyActive = false; penaltyTimer = 0; penaltyViolations = 0; penaltyDuration = 0
             end
         else
             ac.overrideCarState('brake', nil)
             penaltyViolations = 0
         end
-        if penaltyTimer >= cfg.penaltySecs then
+        if penaltyTimer >= penaltyDuration then
             ac.overrideCarState('brake', nil)
-            penaltyActive = false; penaltyTimer = 0; penaltyViolations = 0
+            penaltyActive = false; penaltyTimer = 0; penaltyViolations = 0; penaltyDuration = 0
         end
     end
     local ppos = player.position
@@ -500,15 +501,13 @@ function script.windowMain(dt)
         ui.newLine(5)
         if penaltyActive then
             local limit = cfg.speedLimit + 5
-            local left = math.max(0, cfg.penaltySecs - penaltyTimer)
+            local left = math.max(0, penaltyDuration - penaltyTimer)
             local spd = ac.getCar(playerIndex) and ac.getCar(playerIndex).speedKmh or 0
             local over = spd > limit
             ui.textColored(string.format("PENALTY: %.0fs left  < %d km/h", left, limit), over and rgbm(1, 0, 0, 1) or rgbm(1, 0.8, 0, 1))
             if over then ui.textColored(string.format("SLOW DOWN! (%.0f over)", spd - limit), rgbm(1, 0, 0, 1)) end
         else
-            if ui.button("Got Ticketed", 100, 20) then
-                penaltyActive = true; penaltyTimer = 0; penaltyViolations = 0
-            end
+            ui.textColored("Use Penalty Panel window", rgbm(0.4, 0.4, 0.4, 1))
         end
     else
         ui.newLine(5)
@@ -741,6 +740,47 @@ function script.ticketWindow()
         ui.separator()
         ui.textColored("TICKET:", rgbm(1, 0.8, 0, 1))
         ui.textWrapped(ticketCopied)
+    end
+end
+
+local penalties = {
+    {"Speeding", 60},
+    {"Reckless Driving", 120},
+    {"Street Racing", 180},
+    {"Evading Police", 240},
+    {"Failure to Yield", 60},
+    {"Running Red Light", 90},
+    {"Illegal Lane Change", 45},
+    {"Exhibition of Speed", 120},
+    {"Hit and Run", 300},
+    {"No Valid License", 150},
+}
+
+function script.penaltyWindow()
+    ui.text("Penalty Panel")
+    ui.separator()
+    if teamChoice ~= 1 then ui.text("Switch to Robber to use"); return end
+    if penaltyActive then
+        local left = math.max(0, penaltyDuration - penaltyTimer)
+        local mins = math.floor(left / 60)
+        local secs = math.floor(left % 60)
+        ui.textColored(string.format("Active: %02d:%02d remaining", mins, secs), rgbm(1, 0.5, 0, 1))
+        ui.text(string.format("Stay under %d km/h", cfg.speedLimit + 5))
+        if ui.button("Clear Penalty", 120, 20) then
+            ac.overrideCarState('brake', nil)
+            penaltyActive = false; penaltyTimer = 0; penaltyViolations = 0; penaltyDuration = 0
+        end
+        return
+    end
+    for _, p in ipairs(penalties) do
+        local mins = math.floor(p[2] / 60)
+        local secs = p[2] % 60
+        local label
+        if secs > 0 then label = string.format("%s (%d:%02d)", p[1], mins, secs)
+        else label = string.format("%s (%d min)", p[1], mins) end
+        if ui.button(label, 220, 18) then
+            penaltyActive = true; penaltyTimer = 0; penaltyViolations = 0; penaltyDuration = p[2]
+        end
     end
 end
 
