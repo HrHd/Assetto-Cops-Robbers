@@ -1,5 +1,5 @@
 local active = true
-local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 60, radarPreset = 3, penaltySecs = 60 }
+local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 60, radarPreset = 3, penaltySecs = 120 }
 
 local function radarRange()     return ({750, 1000, 1500})[cfg.radarPreset] end
 local function radarBehind()     return ({35, 50, 68})[cfg.radarPreset] end
@@ -631,9 +631,9 @@ function script.windowSettings()
     ui.text("Mute keybind:")
     robberMuteButton:control()
     ui.text("Penalty: " .. tostring(cfg.penaltySecs) .. "s")
-    if ui.button("-##pen", 18, 20) then cfg.penaltySecs = math.max(10, cfg.penaltySecs - 10) end
+    if ui.button("-##pen", 18, 20) then cfg.penaltySecs = math.max(30, cfg.penaltySecs - 10) end
     ui.sameLine()
-    if ui.button("+##pen", 18, 20) then cfg.penaltySecs = math.min(180, cfg.penaltySecs + 10) end
+    if ui.button("+##pen", 18, 20) then cfg.penaltySecs = math.min(300, cfg.penaltySecs + 10) end
     ui.separator()
     ui.text("Cop Radar:")
     ui.text("Speed limit: " .. tostring(cfg.speedLimit) .. " km/h")
