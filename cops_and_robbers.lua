@@ -406,10 +406,7 @@ function script.windowMain(dt)
     end
     ui.textColored("  [" .. hsText .. "]", hsColor)
     ui.separator()
-    ui.sameLine()
     ui.textColored(teamChoice == 0 and "  COP" or "  ROBBER", teamChoice == 0 and rgbm(0.2, 0.5, 1, 1) or rgbm(1, 0.3, 0, 1))
-    ui.sameLine()
-    if ui.button("Switch", 50, 20) then teamChoice = teamChoice == 0 and 1 or 0; copScore = 0; robberScore = 0; lastWreckTime = 0 end
     ui.sameLine()
     if ui.button(cfg.compactMode and "[+]" or "[-]", 28, 16) then cfg.compactMode = not cfg.compactMode end
 
@@ -525,6 +522,9 @@ end
 
 function script.windowSettings()
     if ui.button(active and "[X] Enabled" or "[ ] Enabled", 100, 20) then active = not active end
+    ui.separator()
+    ui.text("Team:")
+    if ui.button("Switch to " .. (teamChoice == 0 and "Robber" or "Cop"), 110, 20) then teamChoice = teamChoice == 0 and 1 or 0; copScore = 0; robberScore = 0; lastWreckTime = 0 end
     ui.separator()
     ui.text("Scores:")
     ui.text(string.format("Cop: %d  |  Robber: %d", copScore, robberScore))
