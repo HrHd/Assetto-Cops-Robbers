@@ -1,0 +1,207 @@
+============================================================
+  COPS & ROBBERS -- OFFICIAL RULEBOOK
+  By Jp | v1.0
+============================================================
+
+A competitive two-team pursuit gamemode for Assetto Corsa.
+Cops hunt speeders. Robbers evade. Points are earned by
+surviving chases or catching runners.
+
+
+----------------------------------------------------------
+SECTION 1 -- GAME SETUP
+----------------------------------------------------------
+
+1.1  REQUIREMENTS
+     - Assetto Corsa with Custom Shaders Patch (CSP 0.1.79+)
+     - Cops & Robbers app installed on all player machines
+     - Drag-and-drop the ZIP onto Content Manager to install
+
+1.2  TEAM SELECTION
+     - Open Settings tab -> Team -> Switch to Cop/Robber
+     - Both teams use the SAME app, just select your role
+
+1.3  TRACKS
+     - Designed for SRP (Shutoko Revival Project)
+     - Also supports No Hesi 415 and 110
+     - Server teleport destinations load automatically
+     - Custom spawns can be defined per track
+
+
+----------------------------------------------------------
+SECTION 2 -- COP RULES
+----------------------------------------------------------
+
+2.1  RADAR GUN
+     - Radar detects speeders in a forward-facing cone
+     - Default range: 75m (adjustable 25-200m in Settings)
+     - Default speed limit: 160 km/h (adjustable)
+     - Radar is inactive below 15 km/h (pits)
+
+2.2  TARGET ACQUISITION
+     - Speeders appear on radar as they enter the beam
+     - Signal strength S1-S9 builds over time
+     - To LOCK a target: HOLD the Lock Target keybind
+       for 4 continuous seconds while keeping target in beam
+     - Target must stay in cone during lock or it cancels
+     - Locked targets persist until manually cleared
+
+2.3  TICKET SYSTEM
+     - Open the "Ticket Panel" window from the apps sidebar
+     - Only available when a target is locked
+     - 10 infraction types with randomized fines
+     - Click a charge to copy ticket to clipboard
+     - Paste into chat to notify the robber
+
+2.4  CHASE ENGAGEMENT
+     - When a robber is targeted, their lights will respond
+     - Cop headlights flash 3x on lock as visual signal
+     - Robber headlights flash 2x in response
+     - This handshake confirms both players have the app
+
+2.5  SCORING (MANUAL)
+     - Pull over a robber -> add points in Settings
+     - Use the +/- score adjuster buttons
+     - Reset Scores button to zero
+
+
+----------------------------------------------------------
+SECTION 3 -- ROBBER RULES
+----------------------------------------------------------
+
+3.1  RADAR DETECTOR
+     - Detects cop cars within range using Ka-band frequencies
+     - Signal strength S1-S9 with distance and direction
+     - Three presets: Poor (750m), Decent (1000m), Good (1500m)
+     - Radar inactive below 15 km/h (pits)
+     - Voice announcement "Ka band" plays once on first detection
+     - Laser alert plays when a cop is targeting you
+
+3.2  PROXIMITY AND CHASE SYSTEM
+     - Cop behind in cone + robber over speed limit = proximity timer
+     - Lock warning after 4 seconds of cop behind
+     - Chase activates after continuous cop proximity (default 30s)
+     - Chase flashes for 4 seconds, then displays elapsed time
+     - Chase ends after 60 seconds away from cop AND under speed limit
+     - Then "Searching..." for 60 seconds, then fully clears
+
+3.3  TARGETED STATUS
+     - When a cop is within close range behind + robber speeding:
+       "TARGETED" alert displays
+     - This means a cop has locked onto you
+     - Swerve, change lanes, or break visual to escape
+
+3.4  PENALTY SYSTEM
+     - Open the "Penalty Panel" window from the apps sidebar
+     - Select the infraction you were ticketed for
+     - Each infraction has a preset penalty duration:
+       Speeding: 1 min | Reckless Driving: 2 min | Street Racing: 3 min
+       Evading Police: 4 min | Hit and Run: 5 min
+     - During penalty: STAY UNDER speed limit + 5 km/h
+     - Exceeding limit for 10 continuous seconds -> teleported to pits
+     - Penalty continues after pits until timer expires
+     - Can be cleared early via "Clear Penalty" button
+
+3.5  TELEPORT RULES
+     - Collision with wall OR car -> teleport (toggleable)
+     - Default: Robbers go to pits only ("Pits only" ON)
+     - Cops can choose manual spawn or random spawn
+     - Cooldown between teleports: 8 seconds (adjustable)
+
+3.6  SCORING (MANUAL)
+     - Survive a chase without being caught -> add robber points
+     - Use the +/- score adjuster buttons in Settings
+
+
+----------------------------------------------------------
+SECTION 4 -- SPAWN POINTS
+----------------------------------------------------------
+
+4.1  ONLINE
+     - Server TELEPORT_DESTINATIONS load automatically
+     - Works on SRP, No Hesi 415/110 servers
+
+4.2  OFFLINE / CUSTOM
+     - Create a spawn config file:
+       apps/lua/cops_and_robbers/spawns/<track_id>.ini
+     - Format:
+         [SPAWN_0]
+         NAME = My Spot
+         POS = 123.45, 0.50, 678.90
+         HEADING = 180
+
+     - Cops select spawn from Settings -> Cop Spawn (when manual mode ON)
+
+
+----------------------------------------------------------
+SECTION 5 -- KEYBINDS
+----------------------------------------------------------
+
+5.1  CopsAndRobbers/LockTarget
+     - Hold to lock nearest speeder (cop only)
+     - Requires 4 seconds of continuous hold in beam
+
+5.2  CopsAndRobbers/MuteChirp
+     - Toggle radar chirp audio on/off (robber only)
+     - Works instantly from any team
+
+5.3  BINDING
+     - AC Settings -> Controls -> search for "CopsAndRobbers"
+     - Both keybinds can use the same physical key
+     - They are team-gated and won't interfere
+
+
+----------------------------------------------------------
+SECTION 6 -- SETTINGS OVERVIEW
+----------------------------------------------------------
+
+6.1  GENERAL
+     - Enable/Disable app
+     - Wall collisions / Car collisions trigger
+     - Sensitivity: speed drop to trigger teleport (default 12 km/h)
+     - Car detection range: for collision check (default 5m)
+     - Min speed to trigger collision detection (default 5 km/h)
+     - Teleport cooldown (default 8s)
+     - Compact mode: hide non-essential UI elements
+
+6.2  ROBBER RADAR
+     - Beep audio: on/off
+     - Beep volume (default 1.2)
+     - Chirp speed multiplier (default 1.0x, range 0.1-3.0)
+     - Chirp tone/pitch (default 1.0x, range 0.3-3.0)
+     - Chase start time (default 30s, range 10-120s)
+     - Radar detector presets: Poor/Decent/Good
+     - Mute keybind
+
+6.3  COP RADAR
+     - Speed limit (default 160 km/h, range 30-300)
+     - Radar range (default 75m, range 25-200m)
+     - Lock target keybind
+
+6.4  SPAWN
+     - Robber: Pits Only toggle (default ON)
+     - Cop: Random or Manual spawn selection
+
+
+----------------------------------------------------------
+SECTION 7 -- FAIR PLAY
+----------------------------------------------------------
+
+7.1  The app runs entirely client-side with no server modifications.
+     All detection is local to each player's game instance.
+
+7.2  Scores are manually adjusted. There is no automatic cross-client
+     scoring to prevent abuse or false flagging.
+
+7.3  Radar detection respects line of sight. Cars between you and
+     the target may block the beam (in development).
+
+7.4  Both radars pause below 15 km/h to prevent false flags in pits.
+
+7.5  The app does not inject, hook, or modify game memory.
+     It uses only the official CSP Lua SDK API.
+
+
+============================================================
+  Have fun. Drive fast. Don't get caught.
+============================================================
