@@ -336,7 +336,6 @@ local function updateRadar(dt)
         if radarBeep then radarBeep.volume = cfg.beepVolume; radarBeep.pitch = pitch; radarBeep:setPosition(ppos, plook) end
         radarLastBeep = radarLastBeep + dt
         if radarLastBeep >= interval and radarBeep then radarLastBeep = 0; radarBeep:stop(); radarBeep:start() end
-        end
     else
         radarLastBeep = 0
         if radarBeep then radarBeep:stop(); radarBeep = nil end
