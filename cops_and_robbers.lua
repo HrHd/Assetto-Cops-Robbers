@@ -47,6 +47,8 @@ local laserBeepPath = nil
 local kaVoicePlayed = false
 local laserVoicePlayed = false
 local voiceSuppressTimer = 0
+local wasKaInRange = false
+local wasLaserInRange = false
 local nearestSpeed = 0
 local nearestSpeedDist = math.huge
 local speedTracks = {}
@@ -224,7 +226,7 @@ end
 
 -- ROBBER RADAR --
 local function updateRadar(dt)
-    if teamChoice ~= 1 then nearestCopDist = math.huge; kaVoicePlayed = false; laserVoicePlayed = false; return end
+    if teamChoice ~= 1 then nearestCopDist = math.huge; wasKaInRange = false; return end
     if not radarReady then beepPath = initBeep(); laserPath = initLaser(); kaBeepPath = initKaBeep(); laserBeepPath = initLaserBeep(); radarReady = true end
     local sim = ac.getSim()
     if not sim then return end
@@ -234,7 +236,7 @@ local function updateRadar(dt)
         nearestCopDist = math.huge; copBehindDist = math.huge
         copProximityTimer = 0; chaseActive = false; chaseSearchPhase = false
         radarLastBeep = 0; if radarBeep then radarBeep:stop(); radarBeep = nil end
-        kaVoicePlayed = false; laserVoicePlayed = false
+        wasKaInRange = false
         if penaltyActive then penaltyTimer = penaltyTimer + dt end
         return
     end
@@ -309,11 +311,12 @@ local function updateRadar(dt)
     robberPrevSpeed = player.speedKmh
     copPrevSpd = curCopSpd
 
-    if nearestCopDist < radarBeepRange() and cfg.radarAudio and player.speedKmh >= 15 then
-        if not kaVoicePlayed and beepPath then
+    local kaInRange = nearestCopDist < radarBeepRange() and player.speedKmh >= 15
+    if kaInRange and cfg.radarAudio then
+        if not wasKaInRange and beepPath then
             local voice = ac.AudioEvent.fromFile({filename = beepPath})
             if voice then voice.volume = cfg.beepVolume; voice:setPosition(ppos, plook); voice:start() end
-            kaVoicePlayed = true; voiceSuppressTimer = 1.5
+            voiceSuppressTimer = 1.5
         end
         voiceSuppressTimer = math.max(0, voiceSuppressTimer - dt)
         if voiceSuppressTimer > 0 then
@@ -337,8 +340,21 @@ local function updateRadar(dt)
     else
         radarLastBeep = 0
         if radarBeep then radarBeep:stop(); radarBeep = nil end
-        kaVoicePlayed = false
     end
+    wasKaInRange = kaInRange
+
+    local laserInRange = copBehindDist < radarTargeted() and player.speedKmh >= cfg.speedLimit and laserPath and cfg.radarAudio
+    if laserInRange then
+        if not wasLaserInRange then
+            local voice = ac.AudioEvent.fromFile({filename = laserPath})
+            if voice then voice.volume = cfg.beepVolume; voice:setPosition(ppos, plook); voice:start() end
+        end
+        if not laserBeep or not laserBeep.isValid then laserBeep = ac.AudioEvent.fromFile({filename = laserBeepPath}) end
+        if laserBeep then laserBeep.volume = cfg.beepVolume; laserBeep.pitch = 1.0; laserBeep:setPosition(ppos, plook); laserBeep:stop(); laserBeep:start() end
+    else
+        if laserBeep then laserBeep:stop(); laserBeep = nil end
+    end
+    wasLaserInRange = laserInRange
 end
 
 -- COP SPEED RADAR --
@@ -389,21 +405,8 @@ local function updateSpeedRadar(dt)
                                     speedTracks[i].time = speedTracks[i].time + dt
                                     speedTracks[i].speed = spd
                                     speedTracks[i].dist = dist
-    end
-
-    if copBehindDist < radarTargeted() and player.speedKmh >= cfg.speedLimit and laserPath and cfg.radarAudio then
-        if not laserVoicePlayed and laserPath then
-            local voice = ac.AudioEvent.fromFile({filename = laserPath})
-            if voice then voice.volume = cfg.beepVolume; voice:setPosition(ppos, plook); voice:start() end
-            laserVoicePlayed = true
-        end
-        if not laserBeep or not laserBeep.isValid then laserBeep = ac.AudioEvent.fromFile({filename = laserBeepPath}) end
-        if laserBeep then laserBeep.volume = cfg.beepVolume; laserBeep.pitch = 1.0; laserBeep:setPosition(ppos, plook); laserBeep:stop(); laserBeep:start() end
-    else
-        if laserBeep then laserBeep:stop(); laserBeep = nil end
-        laserVoicePlayed = false
-    end
-end
+                                end
+                            end
                         end
                     end
                 end
