@@ -230,19 +230,15 @@ local function updateRadar(dt)
         penaltyTimer = penaltyTimer + dt
         local limit = cfg.speedLimit + 5
         if player.speedKmh > limit then
-            ac.overrideCarState('brake', 1)
-            penaltyViolations = penaltyViolations + 1
-            if penaltyViolations >= 3 then
-                ac.overrideCarState('brake', nil)
+            penaltyViolations = penaltyViolations + dt
+            if penaltyViolations >= 10 then
                 teleportPlayer()
                 penaltyActive = false; penaltyTimer = 0; penaltyViolations = 0; penaltyDuration = 0
             end
         else
-            ac.overrideCarState('brake', nil)
             penaltyViolations = 0
         end
         if penaltyTimer >= penaltyDuration then
-            ac.overrideCarState('brake', nil)
             penaltyActive = false; penaltyTimer = 0; penaltyViolations = 0; penaltyDuration = 0
         end
     end
@@ -504,8 +500,13 @@ function script.windowMain(dt)
             local left = math.max(0, penaltyDuration - penaltyTimer)
             local spd = ac.getCar(playerIndex) and ac.getCar(playerIndex).speedKmh or 0
             local over = spd > limit
-            ui.textColored(string.format("PENALTY: %.0fs left  < %d km/h", left, limit), over and rgbm(1, 0, 0, 1) or rgbm(1, 0.8, 0, 1))
-            if over then ui.textColored(string.format("SLOW DOWN! (%.0f over)", spd - limit), rgbm(1, 0, 0, 1)) end
+            if over then
+                local warnLeft = math.max(0, 10 - penaltyViolations)
+                ui.textColored(string.format("SLOW DOWN! Pits in %.0fs", warnLeft), rgbm(1, 0, 0, 1))
+                ui.textColored(string.format("PENALTY: %.0fs left  < %d km/h", left, limit), rgbm(1, 0.5, 0, 1))
+            else
+                ui.textColored(string.format("PENALTY: %.0fs left  < %d km/h", left, limit), rgbm(0, 1, 0, 1))
+            end
         else
             ui.textColored("Use Penalty Panel window", rgbm(0.4, 0.4, 0.4, 1))
         end
@@ -764,8 +765,11 @@ function script.penaltyWindow()
         ui.textColored(string.format("Active: %02d:%02d remaining", mins, secs), rgbm(1, 0.5, 0, 1))
         ui.text(string.format("Stay under %d km/h", cfg.speedLimit + 5))
         if ui.button("Clear Penalty", 120, 20) then
-            ac.overrideCarState('brake', nil)
             penaltyActive = false; penaltyTimer = 0; penaltyViolations = 0; penaltyDuration = 0
+        end
+        local spd = ac.getCar(playerIndex) and ac.getCar(playerIndex).speedKmh or 0
+        if spd > cfg.speedLimit + 5 then
+            ui.textColored(string.format("Pits in %.0fs!", math.max(0, 10 - penaltyViolations)), rgbm(1, 0, 0, 1))
         end
         return
     end
