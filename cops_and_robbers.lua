@@ -1,8 +1,8 @@
 local active = true
-local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 30, radarPreset = 3, penaltySecs = 120 }
+local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 30, radarPreset = 3, penaltySecs = 120, copRadarRange = 75 }
 
 local function radarRange()     return ({750, 1000, 1500})[cfg.radarPreset] end
-local function radarBehind()     return ({35, 50, 68})[cfg.radarPreset] end
+local function radarBehind()     return cfg.copRadarRange end
 local function radarBehindDot()  return ({-0.7, -0.82, -0.95})[cfg.radarPreset] end
 local function radarBeepRange()  return ({750, 1000, 1500})[cfg.radarPreset] end
 local function radarTargeted()   return ({15, 22, 30})[cfg.radarPreset] end
@@ -360,7 +360,7 @@ local function updateSpeedRadar(dt)
                     if spd >= cfg.speedLimit and spd <= 350 then
                         local toCar = car.position - ppos
                         local dist = toCar:length()
-                        if dist < 75 then
+                        if dist < cfg.copRadarRange then
                             local dir = toCar:normalize()
                             if plook:dot(dir) > 0.98 then
                                 activeKeys[i] = true
@@ -505,7 +505,7 @@ function script.windowMain(dt)
             end
         elseif copProximityTimer > 4 then
             ui.textColored(string.format("** Lock %.0fs **", copProximityTimer), rgbm(1, 0.4, 0, 1))
-        elseif copBehindDist < 75 then
+        elseif copBehindDist < radarBehind() then
             ui.textColored(string.format("Signal: %.0fm", copBehindDist), rgbm(1, 0.8, 0.1, 1))
         end
 
@@ -663,6 +663,10 @@ function script.windowSettings()
     if ui.button("-##lim", 18, 20) then cfg.speedLimit = math.max(30, cfg.speedLimit - 10) end
     ui.sameLine()
     if ui.button("+##lim", 18, 20) then cfg.speedLimit = math.min(300, cfg.speedLimit + 10) end
+    ui.text("Radar range: " .. tostring(cfg.copRadarRange) .. "m")
+    if ui.button("-##rr", 18, 20) then cfg.copRadarRange = math.max(25, cfg.copRadarRange - 5) end
+    ui.sameLine()
+    if ui.button("+##rr", 18, 20) then cfg.copRadarRange = math.min(200, cfg.copRadarRange + 5) end
     ui.text("Lock target keybind:")
     copLockButton:control()
     ui.separator()
