@@ -625,6 +625,39 @@ local charges = {
     {"No Valid License", 500, 1500},
 }
 
+local ticketCopied = ""
+local ticketCopyTimer = 0
+
+ffi.cdef[[
+    int OpenClipboard(void*);
+    int EmptyClipboard();
+    void* GlobalAlloc(int, size_t);
+    void* GlobalLock(void*);
+    int GlobalUnlock(void*);
+    void* SetClipboardData(int, void*);
+    int CloseClipboard();
+    void* memcpy(void*, const void*, size_t);
+]]
+
+local function copyToClipboard(text)
+    local CF_TEXT = 1
+    local GMEM_MOVEABLE = 2
+    if ffi.C.OpenClipboard(nil) == 0 then return false end
+    ffi.C.EmptyClipboard()
+    local len = #text + 1
+    local hMem = ffi.C.GlobalAlloc(GMEM_MOVEABLE, len)
+    if hMem ~= nil then
+        local pMem = ffi.C.GlobalLock(hMem)
+        if pMem ~= nil then
+            ffi.C.memcpy(pMem, text, len)
+            ffi.C.GlobalUnlock(hMem)
+        end
+        ffi.C.SetClipboardData(CF_TEXT, hMem)
+    end
+    ffi.C.CloseClipboard()
+    return true
+end
+
 function script.ticketWindow()
     ui.text("Ticket Panel")
     ui.separator()
@@ -632,7 +665,7 @@ function script.ticketWindow()
     local hasLocked = false
     local targetName = ""
     for _, t in pairs(activeNotifications) do
-        hasLocked = true; targetName = t.name or t.driver or "Player"; break
+        hasLocked = true; targetName = t.driver or t.name or "Player"; break
     end
     if not hasLocked then ui.textColored("No target locked", rgbm(0.4, 0.4, 0.4, 1)); return end
     ui.text(string.format("Target: %s", targetName))
@@ -642,8 +675,13 @@ function script.ticketWindow()
         local code = string.format("%02d-%03d", math.random(10, 99), math.random(100, 999))
         local ticket = string.format("[TICKET] %s -- %s | $%d | Code: %s", targetName, c[1], fine, code)
         if ui.button(string.format("%s  - $%d", c[1], fine), 220, 18) then
-            ac.setClipboardText(ticket)
+            ticketCopied = ticket; ticketCopyTimer = 5
         end
+    end
+    if ticketCopyTimer > 0 then
+        ui.separator()
+        ui.textColored("TICKET:", rgbm(1, 0.8, 0, 1))
+        ui.textWrapped(ticketCopied)
     end
 end
 
@@ -659,6 +697,7 @@ function script.update(dt)
 
     updateRadar(dt)
     updateSpeedRadar(dt)
+    if ticketCopyTimer > 0 then ticketCopyTimer = ticketCopyTimer - dt end
     if not spawnsLoaded then loadSpawnPoints() end
     reloadTimer = reloadTimer + dt
     if reloadTimer > 2 and #spawnPoints == 0 then reloadTimer = 0; spawnsLoaded = false end
