@@ -626,11 +626,11 @@ local charges = {
 }
 
 local ticketCopied = ""
+local ticketStatus = ""
 local cachedCharges = {}
 local cachedTarget = ""
 
 ffi.cdef[[
-    void* GetDesktopWindow();
     int OpenClipboard(void*);
     int EmptyClipboard();
     void* GlobalAlloc(int, size_t);
@@ -644,21 +644,26 @@ ffi.cdef[[
 local function copyToClipboard(text)
     local CF_TEXT = 1
     local GMEM_MOVEABLE = 2
-    local hwnd = ffi.C.GetDesktopWindow()
-    if ffi.C.OpenClipboard(hwnd) == 0 then return false end
-    ffi.C.EmptyClipboard()
-    local len = #text + 1
-    local hMem = ffi.C.GlobalAlloc(GMEM_MOVEABLE, len)
-    if hMem ~= nil then
-        local pMem = ffi.C.GlobalLock(hMem)
-        if pMem ~= nil then
-            ffi.C.memcpy(pMem, text, len)
-            ffi.C.GlobalUnlock(hMem)
+    local ok = false
+    for _ = 1, 10 do
+        if ffi.C.OpenClipboard(nil) ~= 0 then
+            ffi.C.EmptyClipboard()
+            local len = #text + 1
+            local hMem = ffi.C.GlobalAlloc(GMEM_MOVEABLE, len)
+            if hMem ~= nil then
+                local pMem = ffi.C.GlobalLock(hMem)
+                if pMem ~= nil then
+                    ffi.C.memcpy(pMem, text, len)
+                    ffi.C.GlobalUnlock(hMem)
+                end
+                if ffi.C.SetClipboardData(CF_TEXT, hMem) ~= nil then ok = true end
+            end
+            ffi.C.CloseClipboard()
+            break
         end
-        ffi.C.SetClipboardData(CF_TEXT, hMem)
+        os.sleep(0.01)
     end
-    ffi.C.CloseClipboard()
-    return true
+    return ok
 end
 
 function script.ticketWindow()
@@ -685,7 +690,8 @@ function script.ticketWindow()
     for _, ch in ipairs(cachedCharges) do
         if ui.button(ch.label, 220, 18) then
             ticketCopied = ch.ticket
-            copyToClipboard(ch.ticket)
+            local ok = copyToClipboard(ch.ticket)
+            ticketStatus = ok and "Copied! Ctrl+V to paste" or "View ticket below"
         end
     end
     if ticketCopied ~= "" then
