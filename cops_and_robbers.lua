@@ -1,5 +1,5 @@
 local active = true
-local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 30, radarPreset = 3, penaltySecs = 120, copRadarRange = 75 }
+local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 1.2, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 30, radarPreset = 3, penaltySecs = 120, copRadarRange = 75 }
 
 local function radarRange()     return ({750, 1000, 1500})[cfg.radarPreset] end
 local function radarBehind()     return cfg.copRadarRange end
@@ -46,6 +46,7 @@ local kaBeepPath = nil
 local laserBeepPath = nil
 local kaVoicePlayed = false
 local laserVoicePlayed = false
+local voiceSuppressTimer = 0
 local nearestSpeed = 0
 local nearestSpeedDist = math.huge
 local speedTracks = {}
@@ -311,8 +312,12 @@ local function updateRadar(dt)
         if not kaVoicePlayed and beepPath then
             local voice = ac.AudioEvent.fromFile({filename = beepPath})
             if voice then voice.volume = cfg.beepVolume; voice:setPosition(ppos, plook); voice:start() end
-            kaVoicePlayed = true
+            kaVoicePlayed = true; voiceSuppressTimer = 1.5
         end
+        voiceSuppressTimer = math.max(0, voiceSuppressTimer - dt)
+        if voiceSuppressTimer > 0 then
+            radarLastBeep = 0
+        else
         local interval, pitch
         local br = radarBeepRange()
         if nearestCopDist < br * 0.02 then interval = 0.16; pitch = 1.5
@@ -327,6 +332,7 @@ local function updateRadar(dt)
         if radarBeep then radarBeep.volume = cfg.beepVolume; radarBeep.pitch = pitch; radarBeep:setPosition(ppos, plook) end
         radarLastBeep = radarLastBeep + dt
         if radarLastBeep >= interval and radarBeep then radarLastBeep = 0; radarBeep:stop(); radarBeep:start() end
+        end
     else
         radarLastBeep = 0
         if radarBeep then radarBeep:stop(); radarBeep = nil end
