@@ -40,6 +40,8 @@ local radarBeep = nil
 local radarLastBeep = 0
 local radarReady = false
 local beepPath = nil
+local laserPath = nil
+local laserBeep = nil
 local nearestSpeed = 0
 local nearestSpeedDist = math.huge
 local speedTracks = {}
@@ -194,10 +196,17 @@ local function initBeep()
     return nil
 end
 
+local function initLaser()
+    local path = ac.getFolder(ac.FolderID.ACApps) .. "/lua/cops_and_robbers/audio/laser_alert.wav"
+    local f = io.open(path, "rb")
+    if f then f:close(); return path end
+    return nil
+end
+
 -- ROBBER RADAR --
 local function updateRadar(dt)
     if teamChoice ~= 1 then nearestCopDist = math.huge; return end
-    if not radarReady then beepPath = initBeep(); radarReady = true end
+    if not radarReady then beepPath = initBeep(); laserPath = initLaser(); radarReady = true end
     local sim = ac.getSim()
     if not sim then return end
     local player = ac.getCar(playerIndex)
@@ -349,8 +358,15 @@ local function updateSpeedRadar(dt)
                                     speedTracks[i].time = speedTracks[i].time + dt
                                     speedTracks[i].speed = spd
                                     speedTracks[i].dist = dist
-                                end
-                            end
+    end
+
+    if copBehindDist < radarTargeted() and player.speedKmh >= cfg.speedLimit and laserPath and cfg.radarAudio then
+        if not laserBeep or not laserBeep.isValid then laserBeep = ac.AudioEvent.fromFile({filename = laserPath}) end
+        if laserBeep then laserBeep.volume = cfg.beepVolume; laserBeep.pitch = 1.0; laserBeep:setPosition(ppos, plook); laserBeep:stop(); laserBeep:start() end
+    else
+        if laserBeep then laserBeep:stop(); laserBeep = nil end
+    end
+end
                         end
                     end
                 end
