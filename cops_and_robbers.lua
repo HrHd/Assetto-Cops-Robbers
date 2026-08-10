@@ -1,5 +1,5 @@
 local active = true
-local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 8 }
+local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 60 }
 local teamChoice = 0
 local cooldown = 0
 local cooldownDuration = 8
@@ -575,9 +575,9 @@ function script.windowSettings()
     ui.sameLine()
     if ui.button("+##ct", 18, 20) then cfg.chirpTone = math.min(3.0, cfg.chirpTone + 0.1) end
     ui.text("Chase start: " .. tostring(cfg.chaseStartSecs) .. "s")
-    if ui.button("-##chase", 18, 20) then cfg.chaseStartSecs = math.max(3, cfg.chaseStartSecs - 1) end
+    if ui.button("-##chase", 18, 20) then cfg.chaseStartSecs = math.max(10, cfg.chaseStartSecs - 10) end
     ui.sameLine()
-    if ui.button("+##chase", 18, 20) then cfg.chaseStartSecs = math.min(20, cfg.chaseStartSecs + 1) end
+    if ui.button("+##chase", 18, 20) then cfg.chaseStartSecs = math.min(120, cfg.chaseStartSecs + 10) end
     ui.text("Mute keybind:")
     robberMuteButton:control()
     ui.separator()
