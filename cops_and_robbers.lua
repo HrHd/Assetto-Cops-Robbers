@@ -1,5 +1,5 @@
 local active = true
-local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 60, radarPreset = 3, penaltySecs = 120 }
+local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 30, radarPreset = 3, penaltySecs = 120 }
 
 local function radarRange()     return ({750, 1000, 1500})[cfg.radarPreset] end
 local function radarBehind()     return ({35, 50, 68})[cfg.radarPreset] end
@@ -25,6 +25,7 @@ local chaseSearchPhase = false
 local escapedTextTimer = 0
 local copSearchTimer = 0
 local wasTracking = false
+local copEscapedTimer = 0
 local copScore = 0
 local robberScore = 0
 local lastWreckTime = 0
@@ -417,7 +418,7 @@ local function updateSpeedRadar(dt)
 
     local hasTargets = next(speedTracks) ~= nil
     if wasTracking and not hasTargets then
-        copSearchTimer = 60
+        copSearchTimer = 60; copEscapedTimer = 5
     end
     if copSearchTimer > 0 then
         copSearchTimer = copSearchTimer - dt
@@ -558,7 +559,12 @@ function script.windowMain(dt)
             ui.textColored("Hold key to lock", rgbm(0.35, 0.35, 0.35, 1))
         else
             if copSearchTimer > 0 then
-                ui.textColored(string.format("Searching... %.0fs", copSearchTimer), rgbm(0.5, 0.5, 0.1, 1))
+                copEscapedTimer = math.max(0, copEscapedTimer - dt)
+                if copEscapedTimer > 0 then
+                    ui.textColored("ESCAPED!", rgbm(0, 1, 0, 1))
+                else
+                    ui.textColored(string.format("Searching... %.0fs", copSearchTimer), rgbm(0.5, 0.5, 0.1, 1))
+                end
             elseif ac.getCar(playerIndex) and ac.getCar(playerIndex).speedKmh < 15 then
                 ui.textColored("Pits  -- GHz", rgbm(0.5, 0.5, 0.2, 1))
             else
@@ -793,7 +799,12 @@ function script.radarMini()
             if locked > 0 then ui.textColored(string.format("%d locked %d tracking", locked, scanning), rgbm(1, 0.2, 0, 1)) end
         else
             if copSearchTimer > 0 then
-                ui.textColored(string.format("Search %.0fs", copSearchTimer), rgbm(0.5, 0.5, 0.1, 1))
+                copEscapedTimer = math.max(0, copEscapedTimer - dt)
+                if copEscapedTimer > 0 then
+                    ui.textColored("ESCAPED!", rgbm(0, 1, 0, 1))
+                else
+                    ui.textColored(string.format("Search %.0fs", copSearchTimer), rgbm(0.5, 0.5, 0.1, 1))
+                end
             else
                 ui.textColored("-- GHz", rgbm(0.4, 0.4, 0.4, 1))
             end
