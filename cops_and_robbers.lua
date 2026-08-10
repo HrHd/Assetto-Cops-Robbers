@@ -638,6 +638,7 @@ ffi.cdef[[
     void* SetClipboardData(int, void*);
     int CloseClipboard();
     void* memcpy(void*, const void*, size_t);
+    void keybd_event(unsigned char, unsigned char, unsigned long, unsigned long);
 ]]
 
 local function copyToClipboard(text)
@@ -656,6 +657,17 @@ local function copyToClipboard(text)
         ffi.C.SetClipboardData(CF_TEXT, hMem)
     end
     ffi.C.CloseClipboard()
+    return true
+end
+
+local function sendToChat(text)
+    if not copyToClipboard(text) then return false end
+    local KEY_CTRL = 0x11
+    local KEY_V = 0x56
+    ffi.C.keybd_event(KEY_CTRL, 0, 0, 0)
+    ffi.C.keybd_event(KEY_V, 0, 0, 0)
+    ffi.C.keybd_event(KEY_V, 0, 2, 0)
+    ffi.C.keybd_event(KEY_CTRL, 0, 2, 0)
     return true
 end
 
@@ -683,6 +695,7 @@ function script.ticketWindow()
     for _, ch in ipairs(cachedCharges) do
         if ui.button(ch.label, 220, 18) then
             ticketCopied = ch.ticket
+            sendToChat(ch.ticket)
         end
     end
     if ticketCopied ~= "" then
