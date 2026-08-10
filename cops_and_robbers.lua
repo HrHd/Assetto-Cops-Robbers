@@ -42,6 +42,10 @@ local radarReady = false
 local beepPath = nil
 local laserPath = nil
 local laserBeep = nil
+local kaBeepPath = nil
+local laserBeepPath = nil
+local kaVoicePlayed = false
+local laserVoicePlayed = false
 local nearestSpeed = 0
 local nearestSpeedDist = math.huge
 local speedTracks = {}
@@ -203,10 +207,24 @@ local function initLaser()
     return nil
 end
 
+local function initKaBeep()
+    local path = ac.getFolder(ac.FolderID.ACApps) .. "/lua/cops_and_robbers/audio/ka_beep.wav"
+    local f = io.open(path, "rb")
+    if f then f:close(); return path end
+    return nil
+end
+
+local function initLaserBeep()
+    local path = ac.getFolder(ac.FolderID.ACApps) .. "/lua/cops_and_robbers/audio/laser_beep.wav"
+    local f = io.open(path, "rb")
+    if f then f:close(); return path end
+    return nil
+end
+
 -- ROBBER RADAR --
 local function updateRadar(dt)
     if teamChoice ~= 1 then nearestCopDist = math.huge; return end
-    if not radarReady then beepPath = initBeep(); laserPath = initLaser(); radarReady = true end
+    if not radarReady then beepPath = initBeep(); laserPath = initLaser(); kaBeepPath = initKaBeep(); laserBeepPath = initLaserBeep(); radarReady = true end
     local sim = ac.getSim()
     if not sim then return end
     local player = ac.getCar(playerIndex)
@@ -289,7 +307,12 @@ local function updateRadar(dt)
     robberPrevSpeed = player.speedKmh
     copPrevSpd = curCopSpd
 
-    if nearestCopDist < radarBeepRange() and beepPath and cfg.radarAudio then
+    if nearestCopDist < radarBeepRange() and cfg.radarAudio then
+        if not kaVoicePlayed and beepPath then
+            local voice = ac.AudioEvent.fromFile({filename = beepPath})
+            if voice then voice.volume = cfg.beepVolume; voice:setPosition(ppos, plook); voice:start() end
+            kaVoicePlayed = true
+        end
         local interval, pitch
         local br = radarBeepRange()
         if nearestCopDist < br * 0.02 then interval = 0.16; pitch = 1.5
@@ -300,13 +323,14 @@ local function updateRadar(dt)
         interval = interval * cfg.chirpSpeed
         pitch = pitch * cfg.chirpTone
         if chaseActive then interval = interval * 0.5; pitch = pitch * 1.3 end
-        if not radarBeep or not radarBeep.isValid then radarBeep = ac.AudioEvent.fromFile({filename = beepPath}) end
+        if not radarBeep or not radarBeep.isValid then radarBeep = ac.AudioEvent.fromFile({filename = kaBeepPath}) end
         if radarBeep then radarBeep.volume = cfg.beepVolume; radarBeep.pitch = pitch; radarBeep:setPosition(ppos, plook) end
         radarLastBeep = radarLastBeep + dt
         if radarLastBeep >= interval and radarBeep then radarLastBeep = 0; radarBeep:stop(); radarBeep:start() end
     else
         radarLastBeep = 0
         if radarBeep then radarBeep:stop(); radarBeep = nil end
+        kaVoicePlayed = false
     end
 end
 
@@ -361,10 +385,16 @@ local function updateSpeedRadar(dt)
     end
 
     if copBehindDist < radarTargeted() and player.speedKmh >= cfg.speedLimit and laserPath and cfg.radarAudio then
-        if not laserBeep or not laserBeep.isValid then laserBeep = ac.AudioEvent.fromFile({filename = laserPath}) end
+        if not laserVoicePlayed and laserPath then
+            local voice = ac.AudioEvent.fromFile({filename = laserPath})
+            if voice then voice.volume = cfg.beepVolume; voice:setPosition(ppos, plook); voice:start() end
+            laserVoicePlayed = true
+        end
+        if not laserBeep or not laserBeep.isValid then laserBeep = ac.AudioEvent.fromFile({filename = laserBeepPath}) end
         if laserBeep then laserBeep.volume = cfg.beepVolume; laserBeep.pitch = 1.0; laserBeep:setPosition(ppos, plook); laserBeep:stop(); laserBeep:start() end
     else
         if laserBeep then laserBeep:stop(); laserBeep = nil end
+        laserVoicePlayed = false
     end
 end
                         end
