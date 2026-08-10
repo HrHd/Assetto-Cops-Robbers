@@ -741,6 +741,39 @@ function script.ticketWindow()
     end
 end
 
+function script.radarMini()
+    if teamChoice == 1 then
+        if nearestCopDist < math.huge then
+            local strength = math.floor(math.max(0, math.min(9, (radarRange() - nearestCopDist) / radarRange() * 9 + 1)))
+            local bars = string.rep("|", strength) .. string.rep(".", 9 - strength)
+            local dc = nearestCopDist < radarTargeted() and rgbm(1, 0, 0, 1) or rgbm(0, 1, 0, 1)
+            ui.textColored(string.format("S%d %.0fm %s", strength, nearestCopDist, bars), dc)
+            if chaseActive then
+                local elapsed = os.preciseClock() - chaseStartTime
+                ui.textColored(string.format("CHASE %02d:%02d", math.floor(elapsed/60), math.floor(elapsed%60)), rgbm(1, 0.3, 0, 1))
+            elseif copBehindDist < radarBehind() then
+                ui.textColored(string.format("Lock %.0fs", copProximityTimer), rgbm(1, 0.6, 0, 1))
+            end
+        else
+            ui.textColored("-- GHz", rgbm(0.4, 0.4, 0.4, 1))
+        end
+    else
+        local scanning = 0
+        local bestSpd, bestDist = 0, math.huge
+        for _, t in pairs(speedTracks) do
+            if t.time > 0 then scanning = scanning + 1 end
+            if t.time > 0 and t.dist < bestDist then bestSpd = t.speed; bestDist = t.dist end
+        end
+        if scanning > 0 then
+            ui.textColored(string.format("%.0f km/h  %.0fm", bestSpd, bestDist), rgbm(0, 1, 0.3, 1))
+            local locked = 0; for _ in pairs(activeNotifications) do locked = locked + 1 end
+            if locked > 0 then ui.textColored(string.format("%d locked %d tracking", locked, scanning), rgbm(1, 0.2, 0, 1)) end
+        else
+            ui.textColored("-- GHz", rgbm(0.4, 0.4, 0.4, 1))
+        end
+    end
+end
+
 local penalties = {
     {"Speeding", 60},
     {"Reckless Driving", 120},
