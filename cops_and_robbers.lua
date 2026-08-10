@@ -188,30 +188,10 @@ end
 
 -- AUDIO BEEP --
 local function initBeep()
-    local path = ac.getFolder(ac.FolderID.ACApps) .. "/lua/cops_and_robbers/audio/beep.wav"
+    local path = ac.getFolder(ac.FolderID.ACApps) .. "/lua/cops_and_robbers/audio/ka_alert.wav"
     local f = io.open(path, "rb")
     if f then f:close(); return path end
-    local sr, dur = 48000, 0.06
-    local num = math.floor(sr * dur)
-    local dsz = num * 2
-    f = io.open(path, "wb")
-    if not f then return nil end
-    local function wi(v, b) for _ = 1, b do f:write(string.char(v % 256)); v = math.floor(v / 256) end end
-    f:write("RIFF"); wi(dsz + 36, 4); f:write("WAVE")
-    f:write("fmt "); wi(16, 4); wi(1, 2); wi(1, 2); wi(sr, 4); wi(sr * 2, 4); wi(2, 2); wi(16, 2)
-    f:write("data"); wi(dsz, 4)
-    for i = 0, num - 1 do
-        local t = i / sr
-        local freq = 900 - t / dur * 300
-        local env = math.min(1, t / 0.003) * math.max(0, 1 - t / dur)
-        local phase = 2 * math.pi * freq * t
-        local saw = 1 - 2 * ((phase / (2 * math.pi)) % 1)
-        local s = math.floor(32767 * saw * 0.6 * env)
-        if s < 0 then s = s + 65536 end
-        wi(s, 2)
-    end
-    f:close()
-    return path
+    return nil
 end
 
 -- ROBBER RADAR --
