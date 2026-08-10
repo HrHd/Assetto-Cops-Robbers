@@ -224,7 +224,7 @@ end
 
 -- ROBBER RADAR --
 local function updateRadar(dt)
-    if teamChoice ~= 1 then nearestCopDist = math.huge; return end
+    if teamChoice ~= 1 then nearestCopDist = math.huge; kaVoicePlayed = false; laserVoicePlayed = false; return end
     if not radarReady then beepPath = initBeep(); laserPath = initLaser(); kaBeepPath = initKaBeep(); laserBeepPath = initLaserBeep(); radarReady = true end
     local sim = ac.getSim()
     if not sim then return end
@@ -234,6 +234,7 @@ local function updateRadar(dt)
         nearestCopDist = math.huge; copBehindDist = math.huge
         copProximityTimer = 0; chaseActive = false; chaseSearchPhase = false
         radarLastBeep = 0; if radarBeep then radarBeep:stop(); radarBeep = nil end
+        kaVoicePlayed = false; laserVoicePlayed = false
         if penaltyActive then penaltyTimer = penaltyTimer + dt end
         return
     end
@@ -308,8 +309,8 @@ local function updateRadar(dt)
     robberPrevSpeed = player.speedKmh
     copPrevSpd = curCopSpd
 
-    if nearestCopDist < radarBeepRange() and cfg.radarAudio then
-        if not kaVoicePlayed and beepPath and player.speedKmh >= 15 then
+    if nearestCopDist < radarBeepRange() and cfg.radarAudio and player.speedKmh >= 15 then
+        if not kaVoicePlayed and beepPath then
             local voice = ac.AudioEvent.fromFile({filename = beepPath})
             if voice then voice.volume = cfg.beepVolume; voice:setPosition(ppos, plook); voice:start() end
             kaVoicePlayed = true; voiceSuppressTimer = 1.5
