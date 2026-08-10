@@ -22,6 +22,9 @@ local chaseFlashTimer = 0
 local chaseAwayTimer = 0
 local chaseStartTime = 0
 local chaseSearchPhase = false
+local escapedTextTimer = 0
+local copSearchTimer = 0
+local wasTracking = false
 local copScore = 0
 local robberScore = 0
 local lastWreckTime = 0
@@ -286,7 +289,7 @@ local function updateRadar(dt)
     if chaseActive then
         if copBehindDist < 68 and player.speedKmh >= cfg.speedLimit then chaseAwayTimer = 0
         else chaseAwayTimer = chaseAwayTimer + dt end
-        if chaseAwayTimer > 60 then chaseActive = false; chaseSearchPhase = true; chaseAwayTimer = 0 end
+        if chaseAwayTimer > 60 then chaseActive = false; chaseSearchPhase = true; chaseAwayTimer = 0; escapedTextTimer = 5 end
     elseif chaseSearchPhase then
         chaseAwayTimer = chaseAwayTimer + dt
         if chaseAwayTimer > 60 then chaseSearchPhase = false; chaseAwayTimer = 0; copProximityTimer = 0 end
@@ -412,6 +415,16 @@ local function updateSpeedRadar(dt)
         if not car or not car.isConnected then speedTracks[k] = nil; activeNotifications[k] = nil end
     end
 
+    local hasTargets = next(speedTracks) ~= nil
+    if wasTracking and not hasTargets then
+        copSearchTimer = 60
+    end
+    if copSearchTimer > 0 then
+        copSearchTimer = copSearchTimer - dt
+        if copSearchTimer <= 0 then copSearchTimer = 0 end
+    end
+    wasTracking = hasTargets
+
     primaryTargetIdx = nil
     local best = math.huge
     for i, t in pairs(activeNotifications) do
@@ -482,7 +495,12 @@ function script.windowMain(dt)
                 ui.textColored(string.format("CHASE %02d:%02d  Esc: %.0fs", mins, secs, 60 - chaseAwayTimer), rgbm(1, 0.4, 0.1, 1))
             end
         elseif chaseSearchPhase then
-            ui.textColored(string.format("Searching... %.0fs", 60 - chaseAwayTimer), rgbm(0.5, 0.5, 0.1, 1))
+            escapedTextTimer = math.max(0, escapedTextTimer - dt)
+            if escapedTextTimer > 0 then
+                ui.textColored("ESCAPED!", rgbm(0, 1, 0, 1))
+            else
+                ui.textColored(string.format("Searching... %.0fs", 60 - chaseAwayTimer), rgbm(0.5, 0.5, 0.1, 1))
+            end
         elseif copProximityTimer > 4 then
             ui.textColored(string.format("** Lock %.0fs **", copProximityTimer), rgbm(1, 0.4, 0, 1))
         elseif copBehindDist < 75 then
@@ -539,7 +557,9 @@ function script.windowMain(dt)
             ui.textColored(string.format("  S%d  [%s]", signal, bars), rgbm(0, 1, 0.3, 1))
             ui.textColored("Hold key to lock", rgbm(0.35, 0.35, 0.35, 1))
         else
-            if ac.getCar(playerIndex) and ac.getCar(playerIndex).speedKmh < 15 then
+            if copSearchTimer > 0 then
+                ui.textColored(string.format("Searching... %.0fs", copSearchTimer), rgbm(0.5, 0.5, 0.1, 1))
+            elseif ac.getCar(playerIndex) and ac.getCar(playerIndex).speedKmh < 15 then
                 ui.textColored("Pits  -- GHz", rgbm(0.5, 0.5, 0.2, 1))
             else
                 ui.textColored("Scanning...  -- GHz", rgbm(0.4, 0.4, 0.4, 1))
@@ -751,6 +771,9 @@ function script.radarMini()
             if chaseActive then
                 local elapsed = os.preciseClock() - chaseStartTime
                 ui.textColored(string.format("CHASE %02d:%02d", math.floor(elapsed/60), math.floor(elapsed%60)), rgbm(1, 0.3, 0, 1))
+            elseif chaseSearchPhase then
+                if escapedTextTimer > 0 then ui.textColored("ESCAPED!", rgbm(0, 1, 0, 1))
+                else ui.textColored(string.format("Search %.0fs", 60-chaseAwayTimer), rgbm(0.5, 0.5, 0.1, 1)) end
             elseif copBehindDist < radarBehind() then
                 ui.textColored(string.format("Lock %.0fs", copProximityTimer), rgbm(1, 0.6, 0, 1))
             end
@@ -769,7 +792,11 @@ function script.radarMini()
             local locked = 0; for _ in pairs(activeNotifications) do locked = locked + 1 end
             if locked > 0 then ui.textColored(string.format("%d locked %d tracking", locked, scanning), rgbm(1, 0.2, 0, 1)) end
         else
-            ui.textColored("-- GHz", rgbm(0.4, 0.4, 0.4, 1))
+            if copSearchTimer > 0 then
+                ui.textColored(string.format("Search %.0fs", copSearchTimer), rgbm(0.5, 0.5, 0.1, 1))
+            else
+                ui.textColored("-- GHz", rgbm(0.4, 0.4, 0.4, 1))
+            end
         end
     end
 end
