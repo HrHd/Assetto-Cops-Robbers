@@ -626,7 +626,6 @@ local charges = {
 }
 
 local ticketCopied = ""
-local ticketCopyTimer = 0
 
 ffi.cdef[[
     int OpenClipboard(void*);
@@ -675,10 +674,10 @@ function script.ticketWindow()
         local code = string.format("%02d-%03d", math.random(10, 99), math.random(100, 999))
         local ticket = string.format("[TICKET] %s -- %s | $%d | Code: %s", targetName, c[1], fine, code)
         if ui.button(string.format("%s  - $%d", c[1], fine), 220, 18) then
-            ticketCopied = ticket; ticketCopyTimer = 5
+            ticketCopied = ticket
         end
     end
-    if ticketCopyTimer > 0 then
+    if ticketCopied ~= "" then
         ui.separator()
         ui.textColored("TICKET:", rgbm(1, 0.8, 0, 1))
         ui.textWrapped(ticketCopied)
@@ -697,7 +696,6 @@ function script.update(dt)
 
     updateRadar(dt)
     updateSpeedRadar(dt)
-    if ticketCopyTimer > 0 then ticketCopyTimer = ticketCopyTimer - dt end
     if not spawnsLoaded then loadSpawnPoints() end
     reloadTimer = reloadTimer + dt
     if reloadTimer > 2 and #spawnPoints == 0 then reloadTimer = 0; spawnsLoaded = false end
