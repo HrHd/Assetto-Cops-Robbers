@@ -64,6 +64,7 @@ local prevSpeed = 0
 local playerIndex = 0
 local copLockButton = ac.ControlButton("CopsAndRobbers/LockTarget")
 local robberMuteButton = ac.ControlButton("CopsAndRobbers/MuteChirp")
+local refreshRadarButton = ac.ControlButton("CopsAndRobbers/RefreshRadar")
 local muteWasDown = false
 local copLockHoldTime = 0
 local copLockHoldIdx = nil
@@ -705,6 +706,8 @@ function script.windowSettings()
     if ui.button("+##rr", 18, 20) then cfg.copRadarRange = math.min(200, cfg.copRadarRange + 5) end
     ui.text("Lock target keybind:")
     copLockButton:control()
+    ui.text("Refresh radar keybind:")
+    refreshRadarButton:control()
     ui.separator()
     ui.text("Robber Spawn:")
     if ui.button(cfg.robberPitsOnly and "[X] Pits only" or "[ ] Pits only", 80, 20) then cfg.robberPitsOnly = not cfg.robberPitsOnly end
@@ -904,6 +907,16 @@ function script.update(dt)
         if not cfg.radarAudio and radarBeep then radarBeep:stop(); radarBeep = nil; radarLastBeep = 0 end
     end
     muteWasDown = muteDown
+
+    if refreshRadarButton:pressed() then
+        speedTracks = {}; activeNotifications = {}; clearedTargets = {}; primaryTargetIdx = nil
+        nearestCopDist = math.huge; copBehindDist = math.huge; copProximityTimer = 0
+        chaseActive = false; chaseSearchPhase = false; chaseAwayTimer = 0
+        wasKaInRange = false; wasLaserInRange = false
+        if radarBeep then radarBeep:stop(); radarBeep = nil end
+        if laserBeep then laserBeep:stop(); laserBeep = nil end
+        radarLastBeep = 0
+    end
 
     updateRadar(dt)
     updateSpeedRadar(dt)
