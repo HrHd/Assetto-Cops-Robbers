@@ -1,5 +1,5 @@
 local active = true
-local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 60, radarPreset = 3 }
+local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 0.8, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 60, radarPreset = 3, penaltySecs = 60 }
 
 local function radarRange()     return ({750, 1000, 1500})[cfg.radarPreset] end
 local function radarBehind()     return ({35, 50, 68})[cfg.radarPreset] end
@@ -28,6 +28,9 @@ local lastWreckTime = 0
 local lastWreckTeam = 0
 local robberPrevSpeed = 0
 local copPrevSpd = 0
+local penaltyActive = false
+local penaltyTimer = 0
+local penaltyViolations = 0
 local radarBeep = nil
 local radarLastBeep = 0
 local radarReady = false
@@ -218,7 +221,29 @@ local function updateRadar(dt)
         nearestCopDist = math.huge; copBehindDist = math.huge
         copProximityTimer = 0; chaseActive = false; chaseSearchPhase = false
         radarLastBeep = 0; if radarBeep then radarBeep:stop(); radarBeep = nil end
+        if penaltyActive then penaltyTimer = penaltyTimer + dt end
         return
+    end
+
+    if penaltyActive then
+        penaltyTimer = penaltyTimer + dt
+        local limit = cfg.speedLimit + 5
+        if player.speedKmh > limit then
+            ac.overrideCarState('brake', 1)
+            penaltyViolations = penaltyViolations + 1
+            if penaltyViolations >= 3 then
+                ac.overrideCarState('brake', nil)
+                teleportPlayer()
+                penaltyActive = false; penaltyTimer = 0; penaltyViolations = 0
+            end
+        else
+            ac.overrideCarState('brake', nil)
+            penaltyViolations = 0
+        end
+        if penaltyTimer >= cfg.penaltySecs then
+            ac.overrideCarState('brake', nil)
+            penaltyActive = false; penaltyTimer = 0; penaltyViolations = 0
+        end
     end
     local ppos = player.position
     local plook = player.transform.look
@@ -471,6 +496,20 @@ function script.windowMain(dt)
             ui.textColored("** TARGETED **", rgbm(1, 0, 0, 1))
             lastTargetedAlert = os.preciseClock()
         end
+
+        ui.newLine(5)
+        if penaltyActive then
+            local limit = cfg.speedLimit + 5
+            local left = math.max(0, cfg.penaltySecs - penaltyTimer)
+            local spd = ac.getCar(playerIndex) and ac.getCar(playerIndex).speedKmh or 0
+            local over = spd > limit
+            ui.textColored(string.format("PENALTY: %.0fs left  < %d km/h", left, limit), over and rgbm(1, 0, 0, 1) or rgbm(1, 0.8, 0, 1))
+            if over then ui.textColored(string.format("SLOW DOWN! (%.0f over)", spd - limit), rgbm(1, 0, 0, 1)) end
+        else
+            if ui.button("Got Ticketed", 100, 20) then
+                penaltyActive = true; penaltyTimer = 0; penaltyViolations = 0
+            end
+        end
     else
         ui.newLine(5)
         ui.text("-- RADAR GUN --")
@@ -591,6 +630,10 @@ function script.windowSettings()
     if ui.button(presetLabel, 140, 20) then cfg.radarPreset = cfg.radarPreset % 3 + 1 end
     ui.text("Mute keybind:")
     robberMuteButton:control()
+    ui.text("Penalty: " .. tostring(cfg.penaltySecs) .. "s")
+    if ui.button("-##pen", 18, 20) then cfg.penaltySecs = math.max(10, cfg.penaltySecs - 10) end
+    ui.sameLine()
+    if ui.button("+##pen", 18, 20) then cfg.penaltySecs = math.min(180, cfg.penaltySecs + 10) end
     ui.separator()
     ui.text("Cop Radar:")
     ui.text("Speed limit: " .. tostring(cfg.speedLimit) .. " km/h")
