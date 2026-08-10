@@ -314,15 +314,6 @@ local function updateRadar(dt)
 
     local kaInRange = nearestCopDist < radarBeepRange() and player.speedKmh >= 15
     if kaInRange and cfg.radarAudio then
-        if not wasKaInRange and beepPath then
-            local voice = ac.AudioEvent.fromFile({filename = beepPath})
-            if voice then voice.volume = cfg.beepVolume; voice:setPosition(ppos, plook); voice:start() end
-            voiceSuppressTimer = 1.5
-        end
-        voiceSuppressTimer = math.max(0, voiceSuppressTimer - dt)
-        if voiceSuppressTimer > 0 then
-            radarLastBeep = 0
-        else
         local interval, pitch
         local br = radarBeepRange()
         if nearestCopDist < br * 0.02 then interval = 0.16; pitch = 1.5
@@ -344,12 +335,8 @@ local function updateRadar(dt)
     end
     wasKaInRange = kaInRange
 
-    local laserInRange = copBehindDist < radarTargeted() and player.speedKmh >= cfg.speedLimit and laserPath and cfg.radarAudio
+    local laserInRange = copBehindDist < radarTargeted() and player.speedKmh >= cfg.speedLimit and cfg.radarAudio
     if laserInRange then
-        if not wasLaserInRange then
-            local voice = ac.AudioEvent.fromFile({filename = laserPath})
-            if voice then voice.volume = cfg.beepVolume; voice:setPosition(ppos, plook); voice:start() end
-        end
         if not laserBeep or not laserBeep.isValid then laserBeep = ac.AudioEvent.fromFile({filename = laserBeepPath}) end
         if laserBeep then laserBeep.volume = cfg.beepVolume; laserBeep.pitch = 1.0; laserBeep:setPosition(ppos, plook); laserBeep:stop(); laserBeep:start() end
     else
