@@ -581,7 +581,7 @@ function script.windowMain(dt)
             if t.time > bestTime then bestTime = t.time; bestDist = t.dist; bestSpd = t.speed end
         end
         if scanning > 0 then
-            local signal = math.min(9, math.floor(bestTime * 1.5))
+            local signal = math.min(9, math.floor(bestTime))
             local bars = string.rep("|", signal) .. string.rep(".", 9 - signal)
             if copLockHoldTime > 0 and copLockHoldName ~= "" then
                 if copLockHoldTime < 4 then
