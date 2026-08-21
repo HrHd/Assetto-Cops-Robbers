@@ -1,4 +1,6 @@
 local active = true
+local mainOpen = false
+local miniOpen = false
 local cfg = { hitWalls = true, hitCars = true, radarAudio = true, beepVolume = 1.2, speedLimit = 160, copRandomSpawn = true, compactMode = false, chirpSpeed = 1.0, chirpTone = 1.0, robberPitsOnly = true, chaseStartSecs = 30, radarPreset = 3, penaltySecs = 120, copRadarRange = 75 }
 
 local function radarRange()     return ({750, 1000, 1500})[cfg.radarPreset] end
@@ -898,8 +900,14 @@ function script.penaltyWindow()
     end
 end
 
+function script.mainWindowShow() mainOpen = true end
+function script.mainWindowHide() mainOpen = false end
+function script.miniWindowShow() miniOpen = true end
+function script.miniWindowHide() miniOpen = false end
+
 function script.update(dt)
     if not active then return end
+    if not mainOpen and not miniOpen then return end
 
     local muteDown = robberMuteButton:pressed()
     if muteDown and not muteWasDown then
