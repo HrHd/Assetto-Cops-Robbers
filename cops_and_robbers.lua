@@ -905,8 +905,31 @@ function script.mainWindowHide() mainOpen = false end
 function script.miniWindowShow() miniOpen = true end
 function script.miniWindowHide() miniOpen = false end
 
+local visibilityCheckTimer = 0
+
+local function checkWindowVisibility()
+    if not ac.getAppWindows then return end
+    local windows = ac.getAppWindows()
+    local main = false
+    local mini = false
+    for _, w in ipairs(windows) do
+        if w.visible then
+            local n = w.name or ""
+            if n:find("Cops & Robbers") then main = true
+            elseif n:find("Radar Mini") then mini = true end
+        end
+    end
+    mainOpen = main
+    miniOpen = mini
+end
+
 function script.update(dt)
     if not active then return end
+    visibilityCheckTimer = visibilityCheckTimer + dt
+    if visibilityCheckTimer >= 0.5 then
+        visibilityCheckTimer = 0
+        checkWindowVisibility()
+    end
     if not mainOpen and not miniOpen then return end
 
     local muteDown = robberMuteButton:pressed()
