@@ -11,31 +11,35 @@ FEATURES
 --------
 
   Both Teams:
-  - Tap any car or wall -> teleport to random spawn point
+  - Tap any car or wall -> teleport to pits / random spawn
   - Toggleable collision triggers (walls, cars, or both)
   - Adjustable sensitivity, cooldown, detection range, min speed
   - Compact mode to hide non-essential UI
-  - Score display with manual adjuster in Settings
+  - Manual score adjuster in Settings
+  - App ONLY runs when the main or mini radar window is open
   - Handshake status indicator in title bar
 
   Cop Mode:
   - Radar gun with signal strength (S1-S9), real-time speed/distance
-  - Hold lock keybind (4s) to hard-lock a target in the beam
-  - Target must stay in radar cone or lock cancels
-  - 75m range, ~18 degree cone, ignores AI and 350+ km/h
+  - Hold LockTarget keybind (4s) to hard-lock a target in the beam
+  - Target must stay in the radar cone or lock cancels
+  - Adjustable range (25-200m, default 75m), narrow ~18 degree cone
+  - Ignores AI and cars above 350 km/h
   - Locked targets persist until manually cleared
   - Manual spawn selection (pick your PA before chasing)
-  - Reset radar button to clear all tracking
+  - Ticket Panel: 10 infractions, random fines, copy to clipboard
+  - Refresh radar keybind to reset all tracking
 
   Robber Mode:
-  - Radar detector with Ka-band frequency readout + signal bars
-  - Sawtooth chirp with distance-based pitch/interval
-  - Direction arrows (L/R/A/!) and threat coloring
-  - Proximity-based lock detection (cop behind for 4s)
-  - Chase system: lock -> chase (8s) -> search phase (60s)
-  - Targeted alert when cop within 27m behind + speeding
-  - Quick mute keybind for the chirp
-  - Chase reset button to clear stuck state
+  - Radar detector with Ka-band readout + signal bars
+  - Real radar audio: Ka voice alert once + chirps, Laser alert when targeted
+  - 3 presets: Poor (750m), Decent (1000m), Good (1500m)
+  - Proximity chase system: lock (4s) -> chase (adjustable, default 30s) -> search (60s)
+  - ESCAPED! + Searching displays after losing the cop
+  - Targeted alert when cop close behind + speeding
+  - Quick mute keybind for the audio
+  - Penalty Panel: timed infractions, speed limit + 5 enforcement
+  - 10s over-limit warning before teleport to pits
 
 
 INSTALLATION
@@ -53,10 +57,25 @@ INSTALLATION
 KEYBINDS (Settings -> Controls)
 --------------------------------
 
-  CopsAndRobbers/LockTarget   - Hold to lock nearest speeder (cop only)
-  CopsAndRobbers/MuteChirp    - Toggle radar chirp on/off (robber only)
+  CopsAndRobbers/LockTarget    - Hold to lock nearest speeder (cop only)
+  CopsAndRobbers/MuteChirp     - Toggle radar audio on/off (robber only)
+  CopsAndRobbers/RefreshRadar  - Reset all radar state (both teams)
 
-  Both keybinds are team-gated and can share the same physical key.
+  Bind joystick/wheel buttons in AC Settings -> Controls ->
+  scroll to the CopsAndRobbers section at the bottom.
+
+  All keybinds are team-gated and can share the same physical key.
+
+
+WINDOWS
+-------
+
+  Cops & Robbers  - Main window (radar, scores, status)
+  Radar Mini      - Minimal popout radar window
+  Ticket Panel    - Cop: issue tickets (copies to clipboard)
+  Penalty Panel   - Robber: accept timed penalties
+
+  The app only functions while the main or mini radar window is open.
 
 
 SPAWN POINTS
@@ -92,22 +111,39 @@ SETTINGS
   Robber Radar:
   - Beep audio on/off
   - Beep volume (0.1 - 2.0)
-  - Chirp speed multiplier (0.3x - 3.0x)
+  - Chirp speed multiplier (0.1x - 3.0x)
+  - Chirp tone/pitch (0.3x - 3.0x)
+  - Chase start time (10-120s, default 30s)
+  - Radar presets: Poor / Decent / Good
   - Mute keybind
 
   Cop Radar:
-  - Speed limit (30 - 300 km/h)
+  - Speed limit (30-300 km/h, default 160)
+  - Radar range (25-200m, default 75m)
   - Lock target keybind
+  - Refresh radar keybind
 
-  Cop Spawn:
-  - Random (default) or select from spawn list
+  Spawn:
+  - Robber: Pits Only (default ON)
+  - Cop: Random or manual spawn selection
 
 
 SCORING
 -------
 
-  Scores are fully manual — use the +/- buttons in Settings
+  Scores are fully manual - use the +/- buttons in Settings
   to add or remove points. No automatic detection.
+
+
+TICKETS & PENALTIES
+-------------------
+
+  Cop: Open Ticket Panel with a target locked, click an infraction.
+       Ticket copies to clipboard, paste into chat.
+
+  Robber: Open Penalty Panel and select the received infraction.
+          Stay under speed limit + 5 km/h for the full duration.
+          Exceeding for 10s -> teleported to pits.
 
 
 CREDITS
@@ -121,10 +157,11 @@ CREDITS
 CHANGELOG
 ---------
 
-  v1.0 - Initial release
+  v1.0 - Full release
   - Cop radar gun with beam targeting + hard lock
-  - Robber radar detector with Ka-band display + chirp
+  - Robber radar detector with real Ka/Laser audio
   - Chase system with lock/search phases
+  - Ticket + Penalty panels
   - Server teleport integration (SRP/415/110)
   - Manual scoring with adjuster buttons
-  - Compact mode, keybinds, spawn selector
+  - Window-gated operation, compact mode, keybinds
